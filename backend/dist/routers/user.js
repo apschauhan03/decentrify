@@ -76,6 +76,51 @@ router.get("/generatepresignedurl", middleware_1.authMiddleWare, (req, res) => _
         preSignedUrl,
     });
 }));
+router.get("/task", middleware_1.authMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // @ts-ignore
+    const user_id = req.userId;
+    const task_id = req.query.taskid;
+    console.log('====================================');
+    console.log("taskId now", task_id);
+    console.log('====================================');
+    const taskDetails = yield prismaClient.task.findFirst({
+        where: {
+            user_id: user_id,
+            id: Number(task_id)
+        },
+        include: {
+            options: true
+        }
+    });
+    if (!taskDetails) {
+        return res.status(411).json({
+            message: "the task is missing"
+        });
+    }
+    const submissions = yield prismaClient.submission.findMany({
+        where: {
+            task_id: Number(task_id)
+        },
+        include: {
+            option: true
+        }
+    });
+    const result = {};
+    taskDetails.options.forEach((option) => {
+        result[option.id] = {
+            count: 0,
+            option: {
+                imageUrl: option.image_url
+            }
+        };
+    });
+    submissions.forEach(submission => {
+        result[submission.option_id].count++;
+    });
+    res.json({
+        result
+    });
+}));
 router.post("/task", middleware_1.authMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const body = req.body;
     const parsedBody = types_1.createTaskInput.safeParse(body);
@@ -86,9 +131,6 @@ router.post("/task", middleware_1.authMiddleWare, (req, res) => __awaiter(void 0
             message: "inputs are not valid"
         });
     }
-    console.log('====================================');
-    console.log("not zod error");
-    console.log('====================================');
     const response = yield prismaClient.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
         const response = yield tx.task.create({
             data: {

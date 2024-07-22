@@ -78,6 +78,67 @@ router.get("/generatepresignedurl", authMiddleWare, async (req, res) => {
   });
 });
 
+router.get("/task",authMiddleWare,async(req,res)=>{
+  
+  // @ts-ignore
+  const user_id = req.userId;
+  const task_id = req.query.taskid;
+  console.log('====================================');
+  console.log("taskId now",task_id);
+  console.log('====================================');
+  const taskDetails = await prismaClient.task.findFirst({
+    where:{
+      user_id:user_id,
+      id:Number(task_id)
+    },
+    include:{
+      options:true
+    }
+  })
+
+  if(!taskDetails)
+  {
+    return res.status(411).json({
+      message:"the task is missing"
+    })
+  }
+  
+
+  const submissions = await prismaClient.submission.findMany({
+    where:{
+      task_id:Number(task_id)
+    },
+    include:{
+      option:true
+    }
+  })
+
+  const result : Record<string,{
+    count:number,
+    option:{
+      imageUrl:string
+    }
+  }>={};
+
+  taskDetails.options.forEach((option)=>{
+    result[option.id]={
+      count:0,
+      option:{
+        imageUrl:option.image_url
+      }
+    }
+  });
+
+  submissions.forEach(submission => {
+    result[submission.option_id].count++;
+  });
+
+
+  res.json({
+    result
+  })
+})
+
 router.post("/task", authMiddleWare, async (req, res) => {
   const body = req.body;
   const parsedBody = createTaskInput.safeParse(body);
