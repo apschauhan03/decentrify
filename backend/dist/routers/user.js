@@ -33,7 +33,7 @@ const s3Client = new client_s3_1.S3Client({
 router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //add signature verification logic here
     // authentication
-    const walletAddress = "flkadsfklasjfkasjdflkasdjfla";
+    const walletAddress = Math.random().toString();
     const existingUser = yield prismaClient.user.findFirst({
         where: {
             walletAddress: walletAddress,
@@ -75,6 +75,7 @@ router.get("/generatepresignedurl", middleware_1.authMiddleWare, (req, res) => _
     console.log("====================================");
     res.json({
         preSignedUrl,
+        key
     });
 }));
 router.get("/task", middleware_1.authMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -121,6 +122,9 @@ router.get("/task", middleware_1.authMiddleWare, (req, res) => __awaiter(void 0,
 }));
 router.post("/task", middleware_1.authMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const body = req.body;
+    console.log('====================================');
+    console.log(body);
+    console.log('====================================');
     const parsedBody = types_1.createTaskInput.safeParse(body);
     // @ts-ignore
     const userId = req.userId;

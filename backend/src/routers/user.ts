@@ -22,7 +22,7 @@ router.post("/signin", async (req, res) => {
   //add signature verification logic here
 
   // authentication
-  const walletAddress = "flkadsfklasjfkasjdflkasdjfla";
+  const walletAddress = Math.random().toString();
   const existingUser = await prismaClient.user.findFirst({
     where: {
       walletAddress: walletAddress,
@@ -76,6 +76,7 @@ router.get("/generatepresignedurl", authMiddleWare, async (req, res) => {
 
   res.json({
     preSignedUrl,
+    key
   });
 });
 
@@ -139,7 +140,13 @@ router.get("/task",authMiddleWare,async(req,res)=>{
 
 router.post("/task", authMiddleWare, async (req, res) => {
   const body = req.body;
+  
+  
+  console.log('====================================');
+  console.log(body);
+  console.log('====================================');
   const parsedBody = createTaskInput.safeParse(body);
+
   // @ts-ignore
   const userId = req.userId;
 

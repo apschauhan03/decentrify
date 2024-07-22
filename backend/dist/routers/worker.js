@@ -164,7 +164,7 @@ router.post("/payout", middleware_1.authWorkerMiddleWare, (req, res) => __awaite
     }));
     res.status(411).json({
         status: "processing your payment",
-        amount: worker.locked_amount
+        amount: worker.pending_amount
     });
 }));
 exports.default = router;
