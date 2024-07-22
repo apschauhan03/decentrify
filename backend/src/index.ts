@@ -5,7 +5,7 @@ import cors from "cors";
 
 
 const app = express();
-app.use(cors);
+app.use(cors());
 // for allowing users to send data along too
 app.use(express.json());
 
