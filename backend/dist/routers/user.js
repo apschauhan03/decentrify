@@ -19,6 +19,7 @@ const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const middleware_1 = require("../middleware");
 const types_1 = require("../types");
+const libs_1 = require("../utils/libs");
 const router = (0, express_1.Router)();
 const prismaClient = new client_1.PrismaClient();
 const s3Client = new client_s3_1.S3Client({
@@ -80,9 +81,6 @@ router.get("/task", middleware_1.authMiddleWare, (req, res) => __awaiter(void 0,
     // @ts-ignore
     const user_id = req.userId;
     const task_id = req.query.taskid;
-    console.log('====================================');
-    console.log("taskId now", task_id);
-    console.log('====================================');
     const taskDetails = yield prismaClient.task.findFirst({
         where: {
             user_id: user_id,
@@ -135,7 +133,7 @@ router.post("/task", middleware_1.authMiddleWare, (req, res) => __awaiter(void 0
         const response = yield tx.task.create({
             data: {
                 title: parsedBody.data.title,
-                amount: "50",
+                amount: 1 * libs_1.totalDecimal,
                 signature: parsedBody.data.signature,
                 user_id: userId,
             },

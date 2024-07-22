@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
+export const totalDecimal = 1_00_000;
 const prismaClient = new PrismaClient();
 
 export const getNextTask = async (userId:string)=>{
@@ -13,8 +14,10 @@ export const getNextTask = async (userId:string)=>{
             }
         },
         select:{
+            id:true,
             title:true,
-            options:true
+            options:true,
+            amount:true
         }
     });
     return task;

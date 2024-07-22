@@ -5,6 +5,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import jwt from "jsonwebtoken";
 import { authMiddleWare } from "../middleware";
 import { createTaskInput } from "../types";
+import { totalDecimal } from "../utils/libs";
 const router = Router();
 
 const prismaClient = new PrismaClient();
@@ -83,9 +84,6 @@ router.get("/task",authMiddleWare,async(req,res)=>{
   // @ts-ignore
   const user_id = req.userId;
   const task_id = req.query.taskid;
-  console.log('====================================');
-  console.log("taskId now",task_id);
-  console.log('====================================');
   const taskDetails = await prismaClient.task.findFirst({
     where:{
       user_id:user_id,
@@ -155,7 +153,7 @@ router.post("/task", authMiddleWare, async (req, res) => {
     const response = await tx.task.create({
       data: {
         title: parsedBody.data.title,
-        amount: "50",
+        amount: 1*totalDecimal,
         signature: parsedBody.data.signature,
         user_id: userId,
       },
