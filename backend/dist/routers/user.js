@@ -75,6 +75,7 @@ router.get("/generatepresignedurl", middleware_1.authMiddleWare, (req, res) => _
     console.log("====================================");
     res.json({
         preSignedUrl,
+        key
     });
 }));
 router.get("/task", middleware_1.authMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {

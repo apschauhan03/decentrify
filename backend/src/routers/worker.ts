@@ -59,7 +59,7 @@ router.get("/nextTask", authWorkerMiddleWare, async (req, res) => {
       message: "no remaining task found for you",
     });
   } else {
-    res.status(411).json({
+    res.json({
       task,
     });
   }
@@ -122,7 +122,7 @@ router.post("/submission", authWorkerMiddleWare, async (req, res) => {
     })
    
     const nextTaskToDisplay = await getNextTask(workerId);
-    return res.status(411).json({
+    return res.json({
         nextTaskToDisplay,
         amount
     })

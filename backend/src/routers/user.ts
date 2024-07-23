@@ -76,6 +76,7 @@ router.get("/generatepresignedurl", authMiddleWare, async (req, res) => {
 
   res.json({
     preSignedUrl,
+    key
   });
 });
 
