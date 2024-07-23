@@ -6,6 +6,8 @@ import jwt from "jsonwebtoken";
 import { authMiddleWare } from "../middleware";
 import { createTaskInput } from "../types";
 import { totalDecimal } from "../utils/libs";
+import nacl from "tweetnacl";
+import { Connection, PublicKey } from "@solana/web3.js";
 const router = Router();
 
 const prismaClient = new PrismaClient();
@@ -17,15 +19,29 @@ const s3Client = new S3Client({
   region: "us-east-1",
 });
 
+const connection = new Connection(process.env.NEXT_PUBLIC_NPC_SERVER as string);
+
 //sign in with router
 router.post("/signin", async (req, res) => {
   //add signature verification logic here
+  const {publicKey,signature} = req.body;
+  const message = new TextEncoder().encode("Sign in to Decentrify.");
 
+  const result = nacl.sign.detached.verify(
+    message,
+    new Uint8Array(signature.data),
+    new PublicKey(publicKey).toBytes()
+  )
+  if(!result)
+  {
+    return res.status(411).json({
+      message:"this public key does not match"
+    })
+  }
   // authentication
-  const walletAddress = "flkadsfklasjfkasjdflkasdjfla";
   const existingUser = await prismaClient.user.findFirst({
     where: {
-      walletAddress: walletAddress,
+      walletAddress: publicKey,
     },
   });
   const JWTSecret = process.env.JWTSecret as string;
@@ -42,7 +58,7 @@ router.post("/signin", async (req, res) => {
   } else {
     const user = await prismaClient.user.create({
       data: {
-        walletAddress: walletAddress,
+        walletAddress: publicKey,
       },
     });
 
@@ -144,17 +160,45 @@ router.post("/task", authMiddleWare, async (req, res) => {
   // @ts-ignore
   const userId = req.userId;
 
+  const user = await prismaClient.user.findFirst({
+    where:{
+      id:userId
+    }
+  })
+
   if (!parsedBody.success) {
     return res.status(411).json({
       message: "inputs are not valid"
     });
   }
 
+  const transaction = await connection.getTransaction(parsedBody.data.signature,{maxSupportedTransactionVersion:1});
+  // if((transaction?.meta?.postBalances[1]??0)-(transaction?.meta?.preBalances[1]??0)!==100000000)
+  // {
+  //   return res.status(411).json({
+  //     message:"Amount/signature is incorrect"
+  //   })
+  // }
+
+  if(transaction?.transaction.message.getAccountKeys().get(1)?.toString()!==process.env.PARENT_WALLET_ADDRESS)
+  {
+    return res.status(411).json({
+      message:"Amount sent to wrong address"
+    })
+  }
+
+  // if(transaction?.transaction.message.getAccountKeys().get(0)?.toString()!==user?.walletAddress)
+  //   {
+  //     return res.status(411).json({p
+  //       message:"Amount sent to wrong address"
+  //     })
+  //   }
+ 
   const response = await prismaClient.$transaction(async (tx) => {
     const response = await tx.task.create({
       data: {
         title: parsedBody.data.title,
-        amount: 1*totalDecimal,
+        amount: 0.1*1000_000_00,
         signature: parsedBody.data.signature,
         user_id: userId,
       },

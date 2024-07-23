@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-export const totalDecimal = 1_00_000;
+export const totalDecimal = 1_00_0000;
 const prismaClient = new PrismaClient();
 
 export const getNextTask = async (userId:string)=>{

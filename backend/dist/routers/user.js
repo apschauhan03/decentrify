@@ -19,7 +19,8 @@ const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const middleware_1 = require("../middleware");
 const types_1 = require("../types");
-const libs_1 = require("../utils/libs");
+const tweetnacl_1 = __importDefault(require("tweetnacl"));
+const web3_js_1 = require("@solana/web3.js");
 const router = (0, express_1.Router)();
 const prismaClient = new client_1.PrismaClient();
 const s3Client = new client_s3_1.S3Client({
@@ -29,14 +30,22 @@ const s3Client = new client_s3_1.S3Client({
     },
     region: "us-east-1",
 });
+const connection = new web3_js_1.Connection(process.env.NEXT_PUBLIC_NPC_SERVER);
 //sign in with router
 router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //add signature verification logic here
+    const { publicKey, signature } = req.body;
+    const message = new TextEncoder().encode("Sign in to Decentrify.");
+    const result = tweetnacl_1.default.sign.detached.verify(message, new Uint8Array(signature.data), new web3_js_1.PublicKey(publicKey).toBytes());
+    if (!result) {
+        return res.status(411).json({
+            message: "this public key does not match"
+        });
+    }
     // authentication
-    const walletAddress = "flkadsfklasjfkasjdflkasdjfla";
     const existingUser = yield prismaClient.user.findFirst({
         where: {
-            walletAddress: walletAddress,
+            walletAddress: publicKey,
         },
     });
     const JWTSecret = process.env.JWTSecret;
@@ -49,7 +58,7 @@ router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function*
     else {
         const user = yield prismaClient.user.create({
             data: {
-                walletAddress: walletAddress,
+                walletAddress: publicKey,
             },
         });
         const token = jsonwebtoken_1.default.sign({
@@ -121,20 +130,44 @@ router.get("/task", middleware_1.authMiddleWare, (req, res) => __awaiter(void 0,
     });
 }));
 router.post("/task", middleware_1.authMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const body = req.body;
     const parsedBody = types_1.createTaskInput.safeParse(body);
     // @ts-ignore
     const userId = req.userId;
+    const user = yield prismaClient.user.findFirst({
+        where: {
+            id: userId
+        }
+    });
     if (!parsedBody.success) {
         return res.status(411).json({
             message: "inputs are not valid"
         });
     }
+    const transaction = yield connection.getTransaction(parsedBody.data.signature, { maxSupportedTransactionVersion: 1 });
+    // if((transaction?.meta?.postBalances[1]??0)-(transaction?.meta?.preBalances[1]??0)!==100000000)
+    // {
+    //   return res.status(411).json({
+    //     message:"Amount/signature is incorrect"
+    //   })
+    // }
+    if (((_a = transaction === null || transaction === void 0 ? void 0 : transaction.transaction.message.getAccountKeys().get(1)) === null || _a === void 0 ? void 0 : _a.toString()) !== process.env.PARENT_WALLET_ADDRESS) {
+        return res.status(411).json({
+            message: "Amount sent to wrong address"
+        });
+    }
+    // if(transaction?.transaction.message.getAccountKeys().get(0)?.toString()!==user?.walletAddress)
+    //   {
+    //     return res.status(411).json({p
+    //       message:"Amount sent to wrong address"
+    //     })
+    //   }
     const response = yield prismaClient.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
         const response = yield tx.task.create({
             data: {
                 title: parsedBody.data.title,
-                amount: 1 * libs_1.totalDecimal,
+                amount: 0.1 * 1000000000,
                 signature: parsedBody.data.signature,
                 user_id: userId,
             },

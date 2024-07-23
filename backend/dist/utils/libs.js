@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getNextTask = exports.totalDecimal = void 0;
 const client_1 = require("@prisma/client");
-exports.totalDecimal = 100000;
+exports.totalDecimal = 1000000;
 const prismaClient = new client_1.PrismaClient();
 const getNextTask = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     const task = yield prismaClient.task.findFirst({

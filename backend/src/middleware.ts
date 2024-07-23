@@ -29,6 +29,7 @@ export function authMiddleWare(req:Request,res:Response,next:NextFunction){
 
 export function authWorkerMiddleWare(req:Request,res:Response,next:NextFunction){
     const authHeader = req.headers.authorization;
+    
     if (!authHeader) {
         return res.status(401).json({ message: 'No token provided' });
     }
